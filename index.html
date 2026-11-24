@@ -129,6 +129,48 @@ body .widget:has(#lista_crud) table.tftable tbody tr:last-child td {
     background-color: #fff !important;
 }
 </style>
+
+<style id="layout-duas-colunas-transporte">
+#transp-painel-operacional {
+    display:none;
+    grid-template-columns:minmax(280px, 0.36fr) minmax(0, 0.64fr);
+    gap:12px;
+    width:100%;
+    margin-top:10px;
+    align-items:start;
+}
+#transp-painel-operacional.aberto { display:grid; }
+#transp-coluna-equipe,
+#transp-coluna-itens { min-width:0; }
+#transp-coluna-equipe > .widget,
+#transp-coluna-itens > .widget { margin-top:0 !important; }
+#transp-coluna-equipe > .widget { height:100%; }
+#transp-coluna-equipe #card-equipe-transporte {
+    max-height:none !important;
+    overflow:visible !important;
+}
+#transp-coluna-itens {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+#transp-coluna-itens #card-listagem-itens-transporte { margin-top:0 !important; }
+#card-itens-disponiveis-transporte .transp-itens-conteudo {
+    grid-template-columns:minmax(145px, .34fr) minmax(0, 1fr);
+}
+#card-listagem-itens-transporte .transp-tabela-itens { min-width:1050px; }
+#card-observacoes-transporte { margin-top:12px !important; }
+@media (max-width:1050px) {
+    #transp-painel-operacional { grid-template-columns:minmax(240px, .4fr) minmax(0, .6fr); }
+    #card-listagem-itens-transporte .transp-tabela-itens { min-width:1000px; }
+}
+@media (max-width:760px) {
+    #transp-painel-operacional { grid-template-columns:1fr; }
+    #transp-coluna-equipe > .widget { height:auto; }
+    #card-itens-disponiveis-transporte .transp-itens-conteudo { grid-template-columns:1fr; }
+}
+</style>
+
 </head>
 <body>
 <script></script>
@@ -756,8 +798,7 @@ body .widget:has(#lista_crud) table.tftable thead th {
     <div class="title">
         <img src="images/icons/dark/frames.png" alt="" class="titleIcon">
         <h6>Dados do Transporte:</h6>
-        <button type="button" class="transp-fechar" id="fechar-card-transporte">Fechar ✕</button>
-    </div>
+    <button type="button" class="transp-recolher-card" aria-expanded="true" aria-label="Recolher card"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></div>
 
     <div class="transp-conteudo">
         <div class="formRow" id="idTransp">
@@ -778,18 +819,37 @@ body .widget:has(#lista_crud) table.tftable thead th {
         <div class="transp-secao">
             <label class="transp-secao-titulo" for="usuarios"><b>Ajudante:</b></label>
             <div class="transp-ajudante">
-                <select id="usuarios" data-placeholder="Selecione o...">
-                    <option value="0">ABNER AMBRÓSIO - 707.916.401-08</option>
-                    <option value="1">MAICON ANDRADE - 920.924.320-01</option>
-                    <option value="2">JONATAS SILVA - 001.355.201-50</option>
-                </select>
+                <div class="transp-select-wrap">
+                    <span class="transp-select-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="10" cy="7" r="4"></circle>
+                            <path d="M20 8v6m3-3h-6"></path>
+                        </svg>
+                    </span>
+                    <select id="usuarios" aria-label="Selecionar ajudante">
+                        <option value="" disabled selected>Selecione um colaborador...</option>
+                        <option value="0">ABNER AMBRÓSIO — 707.916.401-08</option>
+                        <option value="1">MAICON ANDRADE — 920.924.320-01</option>
+                        <option value="2">JONATAS SILVA — 001.355.201-50</option>
+                    </select>
+                    <span class="transp-select-chevron" aria-hidden="true"></span>
+                </div>
                 <a href="javascript:add();" title="Adicionar ajudante" class="transp-adicionar">
-                    <img src="images/icons/sPlus.png" alt="" style="width:14px;height:14px">
-                    Adicionar
+                    <span aria-hidden="true">+</span>
+                    Adicionar ajudante
                 </a>
             </div>
         </div>
     </div>
+</div>
+
+
+<div id="transp-painel-operacional">
+    <div id="transp-slot-equipe"></div>
+    <div id="transp-slot-filtros"></div>
+    <div id="transp-slot-listagem"></div>
+    <div id="transp-slot-observacoes"></div>
 </div>
 
 <div class="widget" id="card-equipe-transporte"
@@ -797,7 +857,7 @@ body .widget:has(#lista_crud) table.tftable thead th {
     <div class="title">
         <img src="images/icons/dark/frames.png" alt="" class="titleIcon">
         <h6>Equipe do Transporte:</h6>
-    </div>
+    <button type="button" class="transp-recolher-card" aria-expanded="true" aria-label="Recolher card"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></div>
 
     <table id="usu_sel" cellpadding="0" cellspacing="0" width="100%" class="sTable">
         <thead>
@@ -820,25 +880,259 @@ body .widget:has(#lista_crud) table.tftable thead th {
 </div>
 
 
+<div class="widget" id="card-itens-disponiveis-transporte"
+     style="margin-top:10px;width:100%;box-sizing:border-box;">
+    <div class="title">
+        <img src="images/icons/dark/frames.png" alt="" class="titleIcon">
+        <h6>Itens do Transporte:</h6>
+    <button type="button" class="transp-recolher-card" aria-expanded="true" aria-label="Recolher card"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></div>
+
+    <div class="transp-itens-conteudo">
+        <div class="transp-item-campo">
+            <label for="sla-os-transporte"><b>SLA O.S.:</b></label>
+            <select id="sla-os-transporte" aria-label="Filtrar por SLA da ordem de serviço">
+                <option value="TODOS">TODOS</option>
+                <option value="NORMAL">NORMAL</option>
+                <option value="URGENTE">URGENTE</option>
+                <option value="AGENDADO">AGENDADO</option>
+                <option value="DIA FIXO">DIA FIXO</option>
+            </select>
+        </div>
+
+        <div class="transp-item-campo">
+            <label for="os-disponivel-transporte"><b>O.S. Disponível:</b></label>
+            <select id="os-disponivel-transporte" aria-label="Selecionar ordem de serviço disponível">
+                <option value="" selected disabled>Selecione uma ordem de serviço...</option>
+                <option value="SES-DF-149141-2026">SES-DF - 149141/2026 - MOVIMENTAÇÃO - EM ATENDIMENTO - VANESSA ARAÚJO DE SOUSA</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<style id="estilo-itens-disponiveis-transporte">
+#card-itens-disponiveis-transporte {
+    display: none;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 14px 0 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #d7dde5;
+    border-radius: 4px;
+    background: #fff;
+    color: #404854;
+    box-shadow: 0 1px 3px rgba(25, 35, 45, .08);
+}
+#card-itens-disponiveis-transporte.aberto { display: block; }
+#card-itens-disponiveis-transporte .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    background: #f2f4f7;
+    border-bottom: 1px solid #d7dde5;
+    color: #343b45;
+}
+#card-itens-disponiveis-transporte .title h6 {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    color: #343b45;
+    font-weight: 700;
+    font-size: 12px;
+}
+#card-itens-disponiveis-transporte .title .titleIcon { position: static; margin: 0; }
+#card-itens-disponiveis-transporte .transp-itens-conteudo {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.32fr) minmax(320px, 1fr);
+    gap: 14px;
+    padding: 14px 12px;
+}
+#card-itens-disponiveis-transporte .transp-item-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+#card-itens-disponiveis-transporte .transp-item-campo label {
+    color: #414a56;
+    font-size: 12px;
+}
+#card-itens-disponiveis-transporte .transp-item-campo select {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    padding: 0 34px 0 11px;
+    border: 1px solid #cbd3dd;
+    border-radius: 4px;
+    background: #fff;
+    color: #344054;
+    font: 13px Arial, Helvetica, sans-serif;
+    outline: none;
+}
+#card-itens-disponiveis-transporte .transp-item-campo select:focus {
+    border-color: #3978b9;
+    box-shadow: 0 0 0 3px rgba(57,120,185,.12);
+}
+@media (max-width: 700px) {
+    #card-itens-disponiveis-transporte .transp-itens-conteudo {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+
+<div class="widget" id="card-listagem-itens-transporte" style="margin-top:10px;width:100%;box-sizing:border-box;">
+    <div class="title">
+        <img src="images/icons/dark/frames.png" alt="" class="titleIcon">
+        <h6>Itens do Transporte:</h6>
+    <button type="button" class="transp-recolher-card" aria-expanded="true" aria-label="Recolher card"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></div>
+    <div class="transp-listagem-wrapper">
+        <table class="sTable transp-tabela-itens" cellpadding="0" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <td class="transp-col-menu"></td>
+                    <td>Solicitação</td><td>Tipo da O.S.</td><td>Status - O.S.</td>
+                    <td>SOLICITANTE</td><td>Cliente</td><td>QTD ITENS</td>
+                    <td>Status do Transporte</td><td>Excluir</td><td>Atender</td>
+                    <td>Cheguei</td><td>Atrasado</td><td>Cancelar</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="transp-col-menu"><button type="button" class="transp-menu-linha" aria-label="Opções">☰</button></td>
+                    <td>149141/2026</td><td>MOVIMENTAÇÃO</td><td>EM ATENDIMENTO</td>
+                    <td>VANESSA ARAÚJO DE SOUSA</td><td>SES-DF</td><td>1</td>
+                    <td>AGUARDANDO TRANSPORTE</td>
+                    <td class="transp-acao-cinza"><button type="button" title="Excluir" aria-label="Excluir">×</button></td>
+                    <td><button type="button" title="Atender" aria-label="Atender"></button></td>
+                    <td><button type="button" title="Cheguei" aria-label="Cheguei"></button></td>
+                    <td><button type="button" title="Atrasado" aria-label="Atrasado"></button></td>
+                    <td><button type="button" title="Cancelar" aria-label="Cancelar"></button></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="transp-listagem-rodape">
+            <strong>Quantidade de O.S.: 1</strong>
+            <button type="button" class="transp-btn-ocorrencias">OCORRÊNCIAS</button>
+        </div>
+    </div>
+</div>
+<style id="estilo-listagem-itens-transporte">
+#card-listagem-itens-transporte { display:none; width:100%; box-sizing:border-box; margin:14px 0 0; padding:0; overflow:hidden; border:1px solid #d7dde5; border-radius:4px; background:#fff; color:#344054; box-shadow:0 1px 3px rgba(25,35,45,.08); }
+#card-listagem-itens-transporte.aberto { display:block; }
+#card-listagem-itens-transporte .title { display:flex; align-items:center; gap:8px; min-height:38px; padding:8px 12px; box-sizing:border-box; background:#f2f4f7; border-bottom:1px solid #d7dde5; }
+#card-listagem-itens-transporte .title h6 { flex:1; margin:0; padding:0; color:#343b45; font-size:12px; font-weight:700; }
+#card-listagem-itens-transporte .title .titleIcon { position:static; margin:0; }
+#card-listagem-itens-transporte .transp-listagem-wrapper { padding:0 0 10px; overflow-x:auto; }
+#card-listagem-itens-transporte .transp-tabela-itens { width:100%; min-width:1250px; border-collapse:collapse; font-size:11px; }
+#card-listagem-itens-transporte .transp-tabela-itens thead td { padding:8px 7px; background:#f4f5f6; color:#626b76; border:1px solid #d4d8dd; text-align:center; white-space:nowrap; }
+#card-listagem-itens-transporte .transp-tabela-itens tbody td { padding:9px 7px; border:1px solid #d4d8dd; color:#344054; white-space:nowrap; vertical-align:middle; }
+#card-listagem-itens-transporte .transp-tabela-itens tbody tr:nth-child(even) { background:#fafbfc; }
+#card-listagem-itens-transporte .transp-col-menu { width:34px; text-align:center; }
+#card-listagem-itens-transporte .transp-menu-linha { border:0; background:transparent; color:#737b84; cursor:pointer; font-size:16px; }
+#card-listagem-itens-transporte .transp-tabela-itens td button:not(.transp-menu-linha) { min-width:24px; min-height:22px; border:0; background:transparent; color:#858b92; cursor:pointer; font-size:17px; font-weight:700; }
+#card-listagem-itens-transporte .transp-listagem-rodape { display:flex; align-items:center; justify-content:flex-end; gap:18px; padding:9px 12px 4px; font-size:12px; color:#344054; }
+#card-listagem-itens-transporte .transp-btn-ocorrencias { padding:7px 17px; border:1px solid #286da7; border-radius:2px; background:#337fb8; color:#fff; font-size:11px; font-weight:700; cursor:pointer; }
+@media(max-width:900px) { #card-listagem-itens-transporte .transp-tabela-itens { min-width:1250px; } }
+</style>
+
+
+<div class="widget" id="card-observacoes-transporte" style="margin-top:10px;width:100%;box-sizing:border-box;">
+    <div class="title">
+        <img src="images/icons/dark/frames.png" alt="" class="titleIcon">
+    <h6>Informações adicionais</h6><button type="button" class="transp-recolher-card" aria-expanded="true" aria-label="Recolher card"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></div>
+    <div class="transp-observacoes-conteudo">
+        <label for="observacoes-transporte">Observações:</label>
+        <textarea id="observacoes-transporte" rows="6" aria-label="Observações do transporte"></textarea>
+    </div>
+</div>
+<div class="transp-observacoes-acoes" id="acoes-observacoes-transporte">
+    <button type="button" class="transp-btn-salvar-observacoes" id="salvar-observacoes-transporte">SALVAR</button>
+    <button type="button" class="transp-btn-iniciar-transporte" id="iniciar-transporte">INICIAR</button>
+</div>
+
+<style id="estilo-observacoes-transporte">
+#card-observacoes-transporte {
+    display:none; width:100%; box-sizing:border-box; margin:14px 0 0;
+    padding:0; overflow:hidden; border:1px solid #cfd4da; border-radius:4px;
+    background:#fff; color:#344054; box-shadow:0 1px 3px rgba(25,35,45,.08);
+}
+#card-observacoes-transporte.aberto { display:block; }
+#card-observacoes-transporte .title {
+    display:flex; align-items:center; min-height:37px; padding:8px 12px;
+    box-sizing:border-box; background:#f2f4f7; border-bottom:1px solid #d7dde5;
+}
+#card-observacoes-transporte .title .titleIcon { position:static; margin:0; }
+#card-observacoes-transporte .title h6 { float:none; flex:1; margin:0; padding:0; color:#343b45; font-weight:700; font-size:12px; }
+#card-observacoes-transporte .transp-observacoes-conteudo { padding:17px 10px 10px; }
+#card-observacoes-transporte label {
+    display:block; margin:0 0 17px; color:#344054; font-size:12px;
+}
+#card-observacoes-transporte textarea {
+    display:block; width:100%; min-height:132px; box-sizing:border-box;
+    padding:9px; resize:vertical; border:1px solid #d7d7d7;
+    border-radius:0; background:#fff; color:#344054;
+    font:12px Arial, Helvetica, sans-serif; outline:none;
+}
+#card-observacoes-transporte textarea:focus {
+    border-color:#8aaed0; box-shadow:0 0 0 2px rgba(51,127,184,.10);
+}
+#acoes-observacoes-transporte {
+    display:none; align-items:center; justify-content:center; gap:82px;
+    padding:5px 0 12px;
+}
+#acoes-observacoes-transporte.aberto { display:flex; }
+#acoes-observacoes-transporte button {
+    min-width:78px; height:30px; padding:0 15px; border:0; border-radius:0;
+    color:#fff; font:700 10px Arial, Helvetica, sans-serif; cursor:pointer;
+}
+#salvar-observacoes-transporte { background:#83b52b; }
+#salvar-observacoes-transporte:hover { background:#719d23; }
+#iniciar-transporte { background:#337fb8; }
+#iniciar-transporte:hover { background:#286da7; }
+</style>
+
 <script id="funcao-card-dados-transporte">
 (function () {
     function iniciarCardDadosTransporte() {
         var tabela = document.querySelector('#lista_crud');
         var card = document.getElementById('card-dados-transporte');
         var equipe = document.getElementById('card-equipe-transporte');
+        var itens = document.getElementById('card-itens-disponiveis-transporte');
+        var listagemItens = document.getElementById('card-listagem-itens-transporte');
+        var observacoes = document.getElementById('card-observacoes-transporte');
+        var acoesObservacoes = document.getElementById('acoes-observacoes-transporte');
+        var painelOperacional = document.getElementById('transp-painel-operacional');
+        var slotEquipe = document.getElementById('transp-slot-equipe');
+        var slotFiltros = document.getElementById('transp-slot-filtros');
+        var slotListagem = document.getElementById('transp-slot-listagem');
+        var slotObservacoes = document.getElementById('transp-slot-observacoes');
 
-        if (!tabela || !card || !equipe) return;
+        if (!tabela || !card || !equipe || !itens || !listagemItens || !observacoes || !acoesObservacoes || !painelOperacional || !slotEquipe || !slotFiltros || !slotListagem || !slotObservacoes) return;
         if (tabela.dataset.doisCardsAtivos === '1') return;
         tabela.dataset.doisCardsAtivos = '1';
 
         var widgetTransporte = tabela.closest('.widget');
         if (widgetTransporte) {
             widgetTransporte.insertAdjacentElement('afterend', card);
-            card.insertAdjacentElement('afterend', equipe);
+            card.insertAdjacentElement('afterend', painelOperacional);
+            slotEquipe.appendChild(equipe);
+            slotFiltros.appendChild(itens);
+            slotListagem.appendChild(listagemItens);
+            slotObservacoes.appendChild(observacoes);
+            slotObservacoes.appendChild(acoesObservacoes);
         }
 
         card.classList.remove('aberto');
+        painelOperacional.classList.remove('aberto');
         equipe.classList.remove('aberto');
+        itens.classList.remove('aberto');
+        listagemItens.classList.remove('aberto');
+        observacoes.classList.remove('aberto');
+        acoesObservacoes.classList.remove('aberto');
 
         function definir(id, valor) {
             var elemento = document.getElementById(id);
@@ -880,18 +1174,15 @@ body .widget:has(#lista_crud) table.tftable thead th {
             if (idInput) idInput.value = numero;
 
             card.classList.add('aberto');
+            painelOperacional.classList.add('aberto');
             equipe.classList.add('aberto');
+            itens.classList.add('aberto');
+            listagemItens.classList.add('aberto');
+            observacoes.classList.add('aberto');
+            acoesObservacoes.classList.add('aberto');
 
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Mantém a posição atual da página ao abrir os dados pela lupa.
         });
-
-        var fechar = document.getElementById('fechar-card-transporte');
-        if (fechar) {
-            fechar.addEventListener('click', function () {
-                card.classList.remove('aberto');
-                equipe.classList.remove('aberto');
-            });
-        }
     }
 
     if (document.readyState === 'loading') {
@@ -902,6 +1193,112 @@ body .widget:has(#lista_crud) table.tftable thead th {
 })();
 </script>
 <!-- FIM CARD DADOS DO TRANSPORTE -->
+
+
+<script id="gerenciamento-equipe-transporte">
+(function () {
+    function inicializarEquipeTransporte() {
+        var select = document.getElementById('usuarios');
+        var tabelaEquipe = document.getElementById('usu_sel');
+        if (!select || !tabelaEquipe || tabelaEquipe.dataset.gerenciamentoAtivo === '1') return;
+
+        tabelaEquipe.dataset.gerenciamentoAtivo = '1';
+        var tbody = tabelaEquipe.querySelector('tbody');
+        if (!tbody) return;
+
+        // Somente os colaboradores incluídos pelo botão recebem ação de exclusão.
+        window.add = function () {
+            var opcao = select.options[select.selectedIndex];
+            if (!opcao || !opcao.value) {
+                select.focus();
+                return;
+            }
+
+            var identificador = String(opcao.value);
+            var jaAdicionado = Array.prototype.some.call(
+                tbody.querySelectorAll('tr[data-adicionado="true"]'),
+                function (linha) { return linha.getAttribute('data-colaborador-id') === identificador; }
+            );
+
+            if (jaAdicionado) {
+                select.value = '';
+                return;
+            }
+
+            var texto = opcao.textContent.trim();
+            var partes = texto.split(/\s+[—–-]\s+/);
+            var nome = (partes[0] || texto).trim();
+            var cpf = (partes[1] || '').trim();
+
+            var linha = document.createElement('tr');
+            linha.setAttribute('data-adicionado', 'true');
+            linha.setAttribute('data-colaborador-id', identificador);
+
+            [nome, cpf, 'Ajudante'].forEach(function (valor) {
+                var celula = document.createElement('td');
+                celula.textContent = valor;
+                linha.appendChild(celula);
+            });
+
+            var celulaAcao = document.createElement('td');
+            celulaAcao.className = 'transp-acao-excluir';
+            celulaAcao.setAttribute('align', 'center');
+
+            var botao = document.createElement('button');
+            botao.type = 'button';
+            botao.className = 'transp-excluir-ajudante';
+            botao.setAttribute('aria-label', 'Excluir ' + nome + ' da equipe');
+            botao.title = 'Remover ajudante';
+            botao.innerHTML = '<svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" focusable="false"><path d="M5 5L15 15M15 5L5 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+            celulaAcao.appendChild(botao);
+            linha.appendChild(celulaAcao);
+
+            tbody.appendChild(linha);
+            select.value = '';
+        };
+
+        tbody.addEventListener('click', function (evento) {
+            var botao = evento.target.closest('.transp-excluir-ajudante');
+            if (!botao) return;
+
+            var linha = botao.closest('tr[data-adicionado="true"]');
+            if (linha && tbody.contains(linha)) linha.remove();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarEquipeTransporte);
+    } else {
+        inicializarEquipeTransporte();
+    }
+})();
+</script>
+<style id="estilo-acoes-equipe-transporte">
+#card-equipe-transporte .transp-excluir-ajudante {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #dc2626;
+    cursor: pointer;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+#card-equipe-transporte .transp-excluir-ajudante:hover {
+    background: #feecec;
+    border-color: #d98b8b;
+}
+#card-equipe-transporte .transp-excluir-ajudante:focus-visible {
+    outline: 2px solid rgba(180, 35, 24, .22);
+    outline-offset: 2px;
+}
+</style>
+
 
 
 <style id="ajuste-conteudo-cards-transporte">
@@ -946,18 +1343,6 @@ body .widget:has(#lista_crud) table.tftable thead th {
 }
 #card-dados-transporte .title .titleIcon,
 #card-equipe-transporte .title .titleIcon { position: static; margin: 0; }
-#card-dados-transporte .transp-fechar {
-    margin-left: auto;
-    padding: 5px 9px;
-    border: 1px solid #cbd2dc;
-    border-radius: 3px;
-    background: #fff;
-    color: #4b5563;
-    font: inherit;
-    line-height: 16px;
-    cursor: pointer;
-}
-#card-dados-transporte .transp-fechar:hover { background: #e9edf2; }
 #card-dados-transporte .transp-conteudo { padding: 12px; }
 #card-dados-transporte #idTransp {
     margin: 0 0 12px;
@@ -1007,28 +1392,107 @@ body .widget:has(#lista_crud) table.tftable thead th {
 }
 #card-dados-transporte .transp-ajudante {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: stretch;
+    gap: 10px;
     flex-wrap: wrap;
 }
+#card-dados-transporte .transp-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 280px;
+    min-width: 220px;
+}
+#card-dados-transporte .transp-select-icon {
+    position: absolute;
+    left: 13px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    color: #778292;
+    pointer-events: none;
+}
+#card-dados-transporte .transp-select-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
 #card-dados-transporte .transp-ajudante select {
-    flex: 1 1 240px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
     min-width: 0;
-    max-width: 100%;
+    height: 42px;
     box-sizing: border-box;
+    padding: 0 42px 0 42px;
+    border: 1px solid #cfd6df;
+    border-radius: 6px;
+    background: #fff;
+    color: #303b49;
+    font: 13px Arial, Helvetica, sans-serif;
+    line-height: normal;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+#card-dados-transporte .transp-ajudante select:hover {
+    border-color: #9ba8b8;
+    background-color: #fcfdff;
+}
+#card-dados-transporte .transp-ajudante select:focus {
+    border-color: #3976ad;
+    box-shadow: 0 0 0 3px rgba(57, 118, 173, .14);
+    outline: none;
+}
+#card-dados-transporte .transp-ajudante select:invalid { color: #7b8796; }
+#card-dados-transporte .transp-select-chevron {
+    position: absolute;
+    right: 15px;
+    width: 8px;
+    height: 8px;
+    border-right: 1.7px solid #697586;
+    border-bottom: 1.7px solid #697586;
+    transform: rotate(45deg) translateY(-2px);
+    pointer-events: none;
 }
 #card-dados-transporte .transp-adicionar {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 9px;
-    border: 1px solid #cbd2dc;
-    border-radius: 3px;
-    background: #f7f8fa;
-    color: #374151;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 0 15px;
+    border: 1px solid #28689f;
+    border-radius: 6px;
+    background: #3279b5;
+    color: #fff;
+    font: 600 12px Arial, Helvetica, sans-serif;
     white-space: nowrap;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-#card-dados-transporte .transp-adicionar:hover { background: #e9edf2; }
+#card-dados-transporte .transp-adicionar span {
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1;
+}
+#card-dados-transporte .transp-adicionar:hover {
+    background: #28689f;
+    border-color: #205b8d;
+    box-shadow: 0 2px 5px rgba(34, 86, 132, .18);
+}
+#card-dados-transporte .transp-adicionar:focus-visible {
+    outline: 3px solid rgba(50, 121, 181, .22);
+    outline-offset: 2px;
+}
+@media (max-width: 520px) {
+    #card-dados-transporte .transp-select-wrap { flex-basis: 100%; min-width: 0; }
+    #card-dados-transporte .transp-adicionar { width: 100%; }
+}
 #card-equipe-transporte { max-height: none !important; overflow: hidden !important; }
 #card-equipe-transporte table#usu_sel {
     width: 100%;
@@ -1062,3 +1526,380 @@ body .widget:has(#lista_crud) table.tftable thead th {
 }
 </style>
 
+
+
+<div id="modal-ocorrencias-transporte" class="transp-modal-overlay" aria-hidden="true">
+    <section class="transp-modal-ocorrencias" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-ocorrencias">
+        <header class="transp-modal-cabecalho">
+            <h3 id="titulo-modal-ocorrencias">Andamento do Transporte</h3>
+            <button type="button" class="transp-modal-fechar" aria-label="Fechar">×</button>
+        </header>
+        <div class="transp-modal-conteudo">
+            <div class="transp-modal-linha-decorativa"></div>
+            <table class="transp-tabela-ocorrencias" cellpadding="0" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <td>Usuário</td>
+                        <td>Data</td>
+                        <td>Item</td>
+                        <td>Ocorrência</td>
+                        <td>Observação</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ANDRÉ RODRIGUES DOS REIS</td>
+                        <td>23/10/2026</td>
+                        <td>--</td>
+                        <td>TRANSPORTE<br>CRIADO</td>
+                        <td>--</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4"><strong>TOTAL:</strong></td>
+                        <td><strong>1</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="transp-modal-rodape">
+                <button type="button" class="transp-modal-voltar">VOLTAR</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style id="estilo-modal-ocorrencias-transporte">
+.transp-modal-overlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    box-sizing:border-box;
+    background:rgba(0,0,0,.42);
+}
+.transp-modal-overlay.aberto { display:flex; }
+.transp-modal-ocorrencias {
+    width:min(710px, calc(100vw - 24px));
+    min-height:500px;
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
+    margin:auto;
+    box-sizing:border-box;
+    border:4px solid #555;
+    border-radius:5px;
+    background:#fafafa;
+    box-shadow:0 4px 18px rgba(0,0,0,.3);
+    color:#344054;
+    font-family:Arial, Helvetica, sans-serif;
+}
+.transp-modal-cabecalho {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:34px;
+    padding:0 9px;
+    border-bottom:1px solid #d1d1d1;
+    background:#f5f5f5;
+}
+.transp-modal-cabecalho h3 {
+    margin:0;
+    color:#333;
+    font-size:13px;
+    font-weight:400;
+}
+.transp-modal-fechar {
+    border:0;
+    padding:0 2px;
+    background:transparent;
+    color:#111;
+    font-size:17px;
+    line-height:20px;
+    font-weight:700;
+    cursor:pointer;
+}
+.transp-modal-conteudo { padding:18px 13px 12px; }
+.transp-modal-linha-decorativa {
+    height:5px;
+    margin:0 0 3px;
+    border-top:1px solid #c9c9c9;
+    border-bottom:1px solid #dedede;
+    background:#eee;
+}
+.transp-tabela-ocorrencias {
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:12px;
+}
+.transp-tabela-ocorrencias thead td {
+    padding:7px 8px;
+    border:1px solid #d1d1d1;
+    background:linear-gradient(#fafafa,#f0f0f0);
+    color:#777;
+    text-align:center;
+}
+.transp-tabela-ocorrencias tbody td {
+    height:55px;
+    padding:7px 10px;
+    border-right:1px solid #e0e0e0;
+    border-bottom:1px solid #dedede;
+    color:#344054;
+    line-height:19px;
+    vertical-align:middle;
+}
+.transp-tabela-ocorrencias tfoot td {
+    padding:13px 10px;
+    border-bottom:1px solid #e5e5e5;
+    background:#f4f4f4;
+    color:#344054;
+}
+.transp-modal-rodape {
+    display:flex;
+    justify-content:flex-end;
+    padding:11px 9px 0;
+}
+.transp-modal-voltar {
+    min-width:78px;
+    height:29px;
+    border:1px solid #78a927;
+    background:#88b82c;
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    cursor:pointer;
+}
+.transp-modal-voltar:hover { background:#759f23; }
+@media(max-width:600px) {
+    .transp-modal-ocorrencias { min-height:420px; }
+    .transp-modal-conteudo { overflow-x:auto; }
+    .transp-tabela-ocorrencias { min-width:590px; }
+}
+</style>
+
+<script id="comportamento-modal-ocorrencias-transporte">
+(function () {
+    function iniciarModalOcorrencias() {
+        var modal = document.getElementById('modal-ocorrencias-transporte');
+        var abrir = document.querySelector('#card-listagem-itens-transporte .transp-btn-ocorrencias');
+        if (!modal || !abrir || modal.dataset.eventosAtivos === '1') return;
+        modal.dataset.eventosAtivos = '1';
+
+        function fecharModal() {
+            modal.classList.remove('aberto');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        function abrirModal() {
+            modal.classList.add('aberto');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        abrir.addEventListener('click', abrirModal);
+        modal.querySelector('.transp-modal-fechar').addEventListener('click', fecharModal);
+        modal.querySelector('.transp-modal-voltar').addEventListener('click', fecharModal);
+        modal.addEventListener('click', function (evento) {
+            if (evento.target === modal) fecharModal();
+        });
+        document.addEventListener('keydown', function (evento) {
+            if (evento.key === 'Escape' && modal.classList.contains('aberto')) fecharModal();
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciarModalOcorrencias);
+    } else {
+        iniciarModalOcorrencias();
+    }
+})();
+</script>
+
+<div id="modal-novo-transporte" class="novo-transporte-overlay" aria-hidden="true">
+  <section class="novo-transporte-dialog" role="dialog" aria-modal="true" aria-labelledby="novo-transporte-titulo">
+    <header class="novo-transporte-header">
+      <strong id="novo-transporte-titulo">Novo Registro de Transporte:</strong>
+      <button type="button" class="novo-transporte-x" aria-label="Fechar">×</button>
+    </header>
+    <div class="novo-transporte-body">
+      <div class="novo-transporte-linha">
+        <label for="novo-responsavel">Responsável pelo transporte</label>
+        <select id="novo-responsavel">
+          <option value="">Selecione o motorista...</option>
+          <option>ANDRÉ RODRIGUES DOS REIS</option>
+          <option>VANESSA ARAÚJO DE SOUSA</option>
+          <option>CARLOS EDUARDO</option>
+        </select>
+      </div>
+      <div class="novo-transporte-linha">
+        <label for="novo-veiculo">Veículo:</label>
+        <select id="novo-veiculo">
+          <option value="">Selecione o veículo...</option>
+          <option>VAN - 01</option>
+          <option>CARRO - 02</option>
+          <option>CAMINHÃO - 01</option>
+        </select>
+      </div>
+      <div class="novo-transporte-linha">
+        <label for="novo-data-entrega">Data da Entrega:</label>
+        <input id="novo-data-entrega" type="date">
+      </div>
+      <div class="novo-transporte-acoes">
+        <button type="button" id="btn-confirmar-novo-transporte">NOVO</button>
+      </div>
+    </div>
+  </section>
+</div>
+<style id="estilo-modal-novo-transporte">
+.novo-transporte-overlay{display:none;position:fixed;inset:0;z-index:100001;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;background:rgba(0,0,0,.38)}
+.novo-transporte-overlay.aberto{display:flex}
+.novo-transporte-dialog{width:min(760px,calc(100vw - 20px));height:310px;max-height:calc(100vh - 24px);overflow:auto;box-sizing:border-box;border:5px solid #555;border-radius:5px;background:#fafafa;box-shadow:0 3px 16px rgba(0,0,0,.28);font-family:Arial,Helvetica,sans-serif;color:#344054}
+.novo-transporte-header{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid #d1d1d1;background:#f2f2f2;font-size:13px;color:#333}
+.novo-transporte-x{border:0;background:transparent;color:#111;font-size:17px;font-weight:bold;cursor:pointer;padding:0 1px}
+.novo-transporte-body{padding:15px 16px}
+.novo-transporte-linha{display:grid;grid-template-columns:42% 58%;min-height:45px;align-items:center;border-bottom:1px solid #dedede;font-size:12px}
+.novo-transporte-linha:nth-child(2){background:#f4f4f4}
+.novo-transporte-linha label{height:100%;display:flex;align-items:center;padding:0 12px;border-right:1px solid #dedede;box-sizing:border-box;color:#344054}
+.novo-transporte-linha select{width:230px;max-width:90%;height:28px;margin-left:12px;padding:3px 7px;border:1px solid #d2d2d2;background:linear-gradient(#fff,#f5f5f5);color:#444;font:11px Arial}
+.novo-transporte-linha input{width:230px;max-width:90%;height:25px;margin-left:12px;padding:2px 4px;box-sizing:border-box;border:1px solid #888;background:#fff;font:13px Arial}
+.novo-transporte-acoes{display:flex;justify-content:flex-end;padding:6px 0 0}
+#btn-confirmar-novo-transporte{width:68px;height:30px;border:1px solid #3478a8;background:linear-gradient(#4e91c2,#2d6f9f);color:#071d2c;font-size:10px;cursor:pointer}
+#btn-confirmar-novo-transporte:hover{background:#28658f;color:#fff}
+@media(max-width:520px){.novo-transporte-dialog{height:auto;min-height:300px}.novo-transporte-linha{grid-template-columns:40% 60%}.novo-transporte-linha label{padding:0 7px}.novo-transporte-linha select,.novo-transporte-linha input{margin-left:7px}}
+</style>
+<script id="comportamento-modal-novo-transporte">
+(function(){
+  var modal=document.getElementById('modal-novo-transporte');
+  if(!modal)return;
+  function abrir(){modal.classList.add('aberto');modal.setAttribute('aria-hidden','false');}
+  function fechar(){modal.classList.remove('aberto');modal.setAttribute('aria-hidden','true');}
+  document.addEventListener('click',function(e){
+    var gatilho=e.target.closest('#divBtns a');
+    if(gatilho && /novo transporte/i.test(gatilho.textContent)){e.preventDefault();abrir();return;}
+    if(e.target.closest('.novo-transporte-x')){fechar();return;}
+    if(e.target===modal){fechar();return;}
+    if(e.target.closest('#btn-confirmar-novo-transporte')){
+      var responsavel=document.getElementById('novo-responsavel').value;
+      var veiculo=document.getElementById('novo-veiculo').value;
+      var data=document.getElementById('novo-data-entrega').value;
+      if(!responsavel||!veiculo||!data){alert('Preencha o responsável, o veículo e a data da entrega.');return;}
+      fechar();
+    }
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&modal.classList.contains('aberto'))fechar();});
+})();
+</script>
+
+
+<style id="layout-tabelas-fullwidth-transporte">
+#transp-painel-operacional{
+ display:none;
+ grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ grid-template-areas:
+   "equipe equipe"
+   "filtros observacoes"
+   "listagem listagem";
+ gap:12px;width:100%;margin-top:12px;align-items:stretch;
+}
+#transp-painel-operacional.aberto{display:grid}
+#transp-slot-equipe{grid-area:equipe;min-width:0}
+#transp-slot-filtros{grid-area:filtros;min-width:0}
+#transp-slot-listagem{grid-area:listagem;min-width:0}
+#transp-slot-observacoes{grid-area:observacoes;min-width:0}
+#transp-slot-equipe>.widget,#transp-slot-filtros>.widget,
+#transp-slot-listagem>.widget,#transp-slot-observacoes>.widget{
+ width:100%;height:100%;margin:0!important;box-sizing:border-box
+}
+#transp-slot-equipe,#transp-slot-listagem{width:100%;min-width:0}
+#transp-slot-equipe #usu_sel{width:100%;table-layout:auto}
+#transp-slot-listagem .transp-listagem-wrapper{width:100%;max-width:100%;overflow-x:auto}
+#transp-slot-listagem .transp-tabela-itens{width:100%;min-width:1050px}
+#transp-slot-observacoes{display:flex;flex-direction:column;gap:10px}
+#transp-slot-observacoes #card-observacoes-transporte{flex:1}
+#transp-slot-observacoes #acoes-observacoes-transporte{margin-top:auto}
+#card-dados-transporte{width:100%;margin-top:12px!important}
+@media(max-width:850px){
+ #transp-painel-operacional.aberto{
+  grid-template-columns:1fr;
+  grid-template-areas:"equipe" "filtros" "observacoes" "listagem"
+ }
+}
+</style>
+
+
+<style id="estilo-cards-recolhiveis-transporte">
+/* Todos os cards ocupam a largura disponível */
+#card-dados-transporte,#card-equipe-transporte,
+#card-itens-disponiveis-transporte,#card-listagem-itens-transporte,
+#card-observacoes-transporte{width:100%!important;max-width:none!important;box-sizing:border-box}
+#transp-painel-operacional.aberto{
+ display:flex!important;flex-direction:column!important;gap:12px!important;width:100%!important
+}
+#transp-painel-operacional>div{width:100%;min-width:0}
+#transp-slot-equipe,#transp-slot-filtros,#transp-slot-listagem,#transp-slot-observacoes{width:100%!important}
+#transp-slot-equipe>.widget,#transp-slot-filtros>.widget,
+#transp-slot-listagem>.widget,#transp-slot-observacoes>.widget{width:100%!important}
+#card-equipe-transporte #usu_sel{width:100%!important}
+#card-listagem-itens-transporte .transp-listagem-wrapper{width:100%;max-width:100%;overflow-x:auto}
+#card-listagem-itens-transporte .transp-tabela-itens{width:100%;min-width:1050px}
+#card-dados-transporte .title,#card-equipe-transporte .title,
+#card-itens-disponiveis-transporte .title,#card-listagem-itens-transporte .title,
+#card-observacoes-transporte .title{display:flex;align-items:center;gap:8px}
+.transp-recolher-card{
+ margin-left:auto!important;flex:0 0 28px;width:28px;height:28px;
+ display:inline-flex;align-items:center;justify-content:center;
+ border:1px solid #d5dbe3;border-radius:4px;background:#fff;
+ color:#475467;font:700 17px Arial;line-height:1;cursor:pointer;
+}
+.transp-recolher-card:hover{background:#edf2f7;border-color:#aab5c2}
+.transp-recolher-card:focus-visible{outline:2px solid #347fb8;outline-offset:2px}
+.widget.transp-card-recolhido>.title~*{display:none!important}
+#card-observacoes-transporte.transp-card-recolhido+#acoes-observacoes-transporte{display:none!important}
+@media(max-width:760px){
+ #transp-painel-operacional.aberto{display:flex!important}
+}
+</style>
+<script id="comportamento-cards-recolhiveis">
+(function(){
+ document.addEventListener('click',function(e){
+  var btn=e.target.closest('.transp-recolher-card');
+  if(!btn)return;
+  var card=btn.closest('.widget');
+  if(!card)return;
+  var recolhido=card.classList.toggle('transp-card-recolhido');
+  btn.setAttribute('aria-expanded',String(!recolhido));
+  btn.setAttribute('aria-label',recolhido?'Expandir card':'Recolher card');
+ });
+})();
+</script>
+
+<style id="seta-svg-sem-fundo">
+.transp-recolher-card{
+ margin-left:auto!important;flex:0 0 28px;width:28px;min-width:28px;
+ height:28px;min-height:28px;box-sizing:border-box;
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ color:#667085;cursor:pointer;transform:none!important;
+}
+.transp-recolher-card:hover{background:transparent!important;color:#1f2937}
+.transp-recolher-card svg{
+ display:block;flex:0 0 18px;width:18px;min-width:18px;
+ height:18px;min-height:18px;fill:none;stroke:currentColor;
+ stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+ transition:transform .18s ease;transform-origin:50% 50%;
+}
+.transp-recolher-card[aria-expanded="false"] svg{transform:rotate(180deg)}
+</style>
+<script id="ajuste-seta-svg">
+(function(){
+ document.addEventListener('click',function(e){
+  var btn=e.target.closest('.transp-recolher-card');
+  if(!btn)return;
+  var card=btn.closest('.widget');
+  if(!card)return;
+  var recolhido=card.classList.contains('transp-card-recolhido');
+  btn.setAttribute('aria-expanded',String(!recolhido));
+ });
+})();
+</script>
